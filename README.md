@@ -4,9 +4,9 @@
 
 | Nombre | Rol |
 |---|---|
-| Felipe Zagal | 2021XXXXX-X |
+| Felipe Zagal | 202121082-2 |
 | Vicente Vizcarra | 202173036-2 |
-| Joaquín Navarro | 202173125-X |
+| Joaquín Navarro | 202173125-3 |
 
 ## Pre-requisitos
 
