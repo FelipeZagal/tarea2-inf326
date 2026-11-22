@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package log;
+
+// Servicio que recibe los eventos "url hit" enviados por el Shortener v1.
+service LogService {
+  rpc RegistrarHit (UrlHit) returns (Ack);
+}
+
+message UrlHit {
+  string timestamp = 1;   // fecha y hora de la visita (ISO 8601, UTC)
+  string short_url = 2;   // URL corta visitada
+  string long_url = 3;    // URL original a la que se redirigió
+}
+
+message Ack {
+  bool ok = 1;
+}
