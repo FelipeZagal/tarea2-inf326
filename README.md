@@ -100,4 +100,4 @@ En la ráfaga de 30 GET, la prueba debe imprimir `301: 16  429: 14`. En la termi
 - Las dos versiones usan HTTPS con el certificado autofirmado que genera `gen_cert.py`. Los scripts de prueba locales usan `verify=False`. Swagger está en `/schema/swagger`.
 - Los archivos `.db`, el entorno virtual y los certificados quedan fuera de Git. Para detener un servicio, presiona Ctrl+C en su terminal.
 
-Para la comparación y la propuesta de IDs distribuidos, consulta [DISCUSION.md](DISCUSION.md).
+Para la comparación y la propuesta de IDs distribuidos, consultar [DISCUSION.md](DISCUSION.md).
