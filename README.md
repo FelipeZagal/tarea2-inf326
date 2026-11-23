@@ -4,11 +4,11 @@
 
 | Nombre | Rol |
 |---|---|
-| Felipe Zagal | Entorno, certificados y Log gRPC. Revisión final y entrega. |
-| Vicente Vizcarra | Implementación, pruebas y discusión de la Arquitectura 1. |
-| Joaquín Navarro | Implementación, pruebas y discusión de la Arquitectura 2. |
+| Felipe Zagal | 202121082-2 |
+| Vicente Vizcarra | 202173036-2 |
+| Joaquín Navarro | 202173125-3 |
 
-## Pre-requisitos
+## Requisitos
 
 - Python 3.10 o superior
 - Git
@@ -44,7 +44,7 @@ python gen_cert.py
 
 ## Arquitectura 1
 
-Redirección temporal 302 y servicio Log que recibe un evento gRPC por cada redirección exitosa.
+Redirección temporal 302 y registro de visitas por gRPC.
 
 **Terminal 1** · Inicia Log en el puerto 50051 y espera el mensaje de arranque.
 
@@ -67,13 +67,14 @@ python pruebas/probar_v1.py
 python arquitectura1/ver_logs.py
 ```
 
-En una base vacía se espera un POST 201, tres redirecciones 302 con la cabecera `Cache-Control: no-store`, un 404 para un código inexistente y tres hits en Log DB. El visor muestra el total acumulado si ya había visitas.
+La prueba devuelve un 201, tres 302 y un 404. En una base vacía, el visor muestra `3 hits registrados`. Si ya había visitas, muestra el total acumulado.
 
 ## Arquitectura 2
 
-Redirección **301** (permanente) + tácticas:
-- *Controlar arribo de eventos*: rate limiter de LiteStar, 20 peticiones por minuto por IP (responde 429 al excederlo).
-- *Mantener múltiples copias de datos*: caché de respuestas de LiteStar en `GET /{hash}`, 120 segundos.
+Redirección permanente 301 con dos tácticas de Litestar.
+
+- *Controlar arribo de eventos* con un límite de 20 peticiones por minuto por IP. Al superarlo, el servicio responde 429.
+- *Mantener múltiples copias de datos* con una caché de 120 segundos para las respuestas de `GET /{hash}`.
 
 **Terminal 1** · Inicia Shortener v2 en el puerto 8002.
 
@@ -88,16 +89,15 @@ python shortener_v2.py
 python pruebas/probar_v2.py
 ```
 
-La prueba obtiene un POST 201 y tres GET 301. En la ráfaga posterior de treinta GET se esperan 16 respuestas 301 y 14 respuestas 429. Para verificar la caché del servidor, comprueba que la línea `[DB] Consultando` para el código probado aparece una sola vez en esa ejecución. Reinicia v2 antes de repetir la prueba.
+En la ráfaga de 30 GET, la prueba debe imprimir `301: 16  429: 14`. En la terminal de v2, debe aparecer una sola línea `[DB] Consultando` para ese código. Reinicia v2 antes de repetir la prueba.
 
 ## Consideraciones de la implementación
 
-- Ambas arquitecturas reciben una URL larga en `POST /shorten` con el campo `long_url` y devuelven `short_url` y `hash`. `GET /{hash}` redirige a la URL original.
-- SQLite crea `shortener_v1.db`, `shortener_v2.db` y `log.db` al iniciar los servicios. En cada base de acortamiento nueva, el ID parte en `597652313` y se codifica en Base62 como `eRgfR`. Enviar de nuevo la misma URL normalizada devuelve el mismo código.
-- Si una URL se entrega sin `http://` ni `https://`, se le agrega `https://` para redirigir a una dirección absoluta.
-- Las dos versiones usan HTTPS con un certificado autofirmado para pruebas locales. Los scripts usan `verify=False` para conectarse a esos servicios. La documentación Swagger se publica en `/schema/swagger` en cada puerto. La posibilidad de observar la caché del 301 en el navegador depende del cliente y de la confianza del certificado.
-- V1 devuelve 302 con `Cache-Control: no-store` y envía el evento en segundo plano con la hora UTC, la URL corta y la URL de destino. Si Log está caído, la redirección se mantiene y aparece `[WARN]`. El cliente gRPC usa `localhost:50051` sin TLS en este despliegue local.
-- En v2, el límite de 20 peticiones por minuto por IP y la caché de 120 segundos viven en memoria del proceso. El reinicio restablece ambos.
-- Los certificados, el entorno virtual y las bases de datos se generan localmente y están excluidos de Git. Para detener un servicio, usa Ctrl+C en su terminal.
+- `POST /shorten` recibe `long_url` y devuelve `short_url` y `hash`. `GET /{hash}` redirige al destino.
+- Cada acortador tiene su base SQLite. En una base nueva, la primera URL recibe el ID `597652313` y el código Base62 `eRgfR`. La misma URL normalizada reutiliza el código. Si falta el esquema, se agrega `https://`.
+- V1 responde con `Cache-Control: no-store` y manda en segundo plano la hora UTC y las dos URLs. Log guarda los hits en `log.db` y escucha por gRPC sin TLS en el despliegue local. Si se detiene Log, v1 sigue redirigiendo y muestra `[WARN]`.
+- V2 guarda la caché y el contador en memoria. Ambos se reinician al volver a levantar el servicio. Si el navegador también guarda un 301, ese comportamiento depende del cliente y del certificado.
+- Las dos versiones usan HTTPS con el certificado autofirmado que genera `gen_cert.py`. Los scripts de prueba locales usan `verify=False`. Swagger está en `/schema/swagger`.
+- Los archivos `.db`, el entorno virtual y los certificados quedan fuera de Git. Para detener un servicio, presiona Ctrl+C en su terminal.
 
 Para la comparación y la propuesta de IDs distribuidos, consulta [DISCUSION.md](DISCUSION.md).
