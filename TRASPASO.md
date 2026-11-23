@@ -25,3 +25,10 @@
 - Resultado de las pruebas: 3x 301, rate limiter 301: 16 / 429: 14, [DB] aparece una sola vez (caché funcionando)
 - Problemas o dudas pendientes: ninguno
 - Para el siguiente: faltan las secciones 3 y 4 de DISCUSION.md, las "Consideraciones" del README y la revisión final. Si se corre probar_v2 dos veces seguidas salen puros 429: reiniciar el servidor o esperar 1 minuto.
+
+## Turno 4 — Felipe Zagal — 22-11-2026 21:51
+
+- **Qué hice:** completé las consideraciones del README, la comparación para la USM y el bonus de IDs distribuidos. Corregí los roles del README y agregué la cabecera `Cache-Control: no-store` en los 302 de v1.
+- **Cómo probarlo:** instala las dependencias y genera los certificados desde una clonación nueva. Sigue las instrucciones del README y ejecuta `python pruebas/probar_v1.py`, `python arquitectura1/ver_logs.py` y `python pruebas/probar_v2.py` con sus servicios levantados.
+- **Resultado de las pruebas:** desde bases vacías, v1 devolvió 201 y el primer código `eRgfR`, tres 302 con destino correcto y `no-store`, un 404 y tres hits registrados por gRPC. El 302 siguió funcionando al detener Log y apareció `[WARN]`. V2 devolvió 201 y `eRgfR`, 19 redirecciones 301 con una sola lectura de SQLite y 14 respuestas 429 al superar el límite.
+- **Problemas o dudas pendientes:** ninguno en las pruebas de la versión final.

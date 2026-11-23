@@ -80,7 +80,8 @@ async def redirigir(hash_: str, request: Request) -> Redirect:
         raise NotFoundException(f"La URL corta '{hash_}' no existe")
     return Redirect(
         path=long_url,
-        status_code=302,  # temporal: el navegador NO la guarda en caché
+        status_code=302,
+        headers={"Cache-Control": "no-store"},
         background=BackgroundTask(enviar_hit, str(request.url), long_url),
     )
 

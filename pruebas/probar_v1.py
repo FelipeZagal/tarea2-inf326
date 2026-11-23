@@ -20,6 +20,7 @@ with httpx.Client(verify=False) as c:
         r = c.get(f"{BASE}/{hash_}")  # httpx no sigue redirecciones por defecto
         print(f"GET /{hash_} ->", r.status_code, "Location:", r.headers.get("location"))
         assert r.status_code == 302, "Se esperaba 302"
+        assert r.headers.get("cache-control") == "no-store", "Se esperaba Cache-Control: no-store"
 
     r = c.get(f"{BASE}/noexiste")
     print("GET /noexiste ->", r.status_code)
