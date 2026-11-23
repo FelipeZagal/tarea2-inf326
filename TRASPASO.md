@@ -18,3 +18,10 @@
 - **Resultado de las pruebas:** `POST /shorten` devolvió `201` con hash `eRgfR`, los 3 `GET /eRgfR` respondieron `302`, `GET /noexiste` devolvió `404` y `ver_logs.py` mostró los 3 hits registrados. También se validó el desacople deteniendo `log_service.py` (las redirecciones siguen dando `302` y aparece `[WARN]` en consola) y la prueba desde Swagger en el navegador.
 - **Problemas o dudas pendientes:** ninguno.
 - **Para el siguiente:** antes de empezar el Turno 3, corre las pruebas de arriba para confirmar que la Arquitectura 1 anda bien en tu PC. Luego copia `arquitectura1/db.py` hacia `arquitectura2/db.py` y levanta Shortener v2 en el puerto 8002.
+
+## Turno 3 — Joaquín Navarro — dom 22, 21:33
+- Qué hice: arquitectura2/db.py (copia), arquitectura2/shortener_v2.py, pruebas/probar_v2.py, sección Arq. 2 del README y de DISCUSION.md
+- Cómo probarlo: `cd arquitectura2` + `python shortener_v2.py`; en otra terminal desde la raíz `python pruebas\probar_v2.py`
+- Resultado de las pruebas: 3x 301, rate limiter 301: 16 / 429: 14, [DB] aparece una sola vez (caché funcionando)
+- Problemas o dudas pendientes: ninguno
+- Para el siguiente: faltan las secciones 3 y 4 de DISCUSION.md, las "Consideraciones" del README y la revisión final. Si se corre probar_v2 dos veces seguidas salen puros 429: reiniciar el servidor o esperar 1 minuto.

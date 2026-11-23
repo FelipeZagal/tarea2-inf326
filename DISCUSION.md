@@ -15,7 +15,22 @@ Como contrapartida, evitar el caché del navegador genera **mayor carga y latenc
 Finalmente, existen compromisos en **confiabilidad de los eventos y seguridad interna**. Por un lado, al no existir persistencia intermedia ni políticas de reintento, cualquier evento `"url hit"` enviado mientras el servicio `Log` está caído se pierde definitivamente; en un entorno real esto debería mitigarse introduciendo reintentos o una cola de mensajes (como RabbitMQ) para garantizar la entrega eventual. Por otro lado, el canal gRPC opera actualmente sin TLS (`insecure_channel`), lo cual es razonable mientras ambos componentes vivan en el mismo nodo de despliegue, pero en un escenario productivo con nodos separados requeriría habilitar TLS o mTLS para proteger la comunicación interna.
 
 ## 2. Arquitectura 2: redirección 301 + rate limiter + caché
-(la completa la Persona 3)
+
+### Beneficios
+
+En primer lugar, esta arquitectura ofrece un **mejor rendimiento**. Al responder con un código 301, el navegador guarda la redirección y en las visitas siguientes ya no contacta al servicio `Shortener v2`. Para los usuarios que visitan el link por primera vez, la caché de respuestas de LiteStar (táctica *Mantener múltiples copias de datos*) evita consultar la base de datos. En nuestras pruebas, la BD se consultó una sola vez para 19 redirecciones exitosas, lo que reduce la latencia y la carga sobre `shortener_v2.db`.
+
+Además, mejora la **disponibilidad ante picos de tráfico o abuso**. El rate limiter (táctica *Controlar arribo de eventos*) limita cada cliente a 20 peticiones por minuto. En las pruebas, de 34 peticiones seguidas se atendieron 20 y las 14 restantes recibieron `429 Too Many Requests`, lo que protege al servicio de bots o de ráfagas que podrían degradarlo para el resto de los usuarios.
+
+### Trade-offs
+
+La principal contrapartida es la **pérdida de analítica**. Como el navegador reutiliza la redirección cacheada, las visitas posteriores nunca llegan al servidor, así que no es posible contar cuántas veces ni cuándo se usó un link. Es justamente lo que la Arquitectura 1 sí permite.
+
+También existe un problema de **reversibilidad**. Un 301 es difícil de deshacer: si la USM cambia la URL de destino, los navegadores que ya guardaron la redirección seguirán enviando a la dirección antigua hasta que se limpie su caché. A esto se suma que la caché del servidor puede entregar una redirección desactualizada durante hasta 120 segundos.
+
+Por otro lado, el **límite por IP** puede afectar a usuarios legítimos. Dentro del campus, muchos usuarios salen a internet a través de la misma IP pública de la red universitaria, por lo que podrían recibir `429` sin estar abusando del servicio. El límite debe calibrarse según el tráfico real.
+
+Finalmente, la caché y el contador del rate limiter **viven en memoria** de un único proceso. Si se levantan varias instancias para escalar, cada una tendría su propia caché y su propio contador, generando comportamientos inconsistentes. Para escalar habría que moverlos a un almacén compartido, como Redis, que LiteStar soporta.
 
 ## 3. Comparación y recomendación para la USM
 (turno 4)

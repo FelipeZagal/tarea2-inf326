@@ -50,7 +50,20 @@ También desde el navegador en https://localhost:8001/schema/swagger (aceptar la
 
 ## Arquitectura 2
 
-(la completa la Persona 3)
+Redirección **301** (permanente) + tácticas:
+- *Controlar arribo de eventos*: rate limiter de LiteStar, 20 peticiones por minuto por IP (responde 429 al excederlo).
+- *Mantener múltiples copias de datos*: caché de respuestas de LiteStar en `GET /{hash}`, 120 segundos.
+
+Levantar (1 terminal con el entorno activado):
+```
+cd arquitectura2
+python shortener_v2.py          # https://localhost:8002
+```
+
+Probar (otra terminal, desde la raíz; reiniciar el servidor antes para partir con el contador en cero):
+```
+python pruebas/probar_v2.py
+```
 
 ## Consideraciones de la implementación
 
